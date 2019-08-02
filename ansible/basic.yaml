@@ -1,0 +1,13 @@
+---
+- hosts: all
+  become: true
+  tasks: 
+    - name: Installs vim
+      yum: name=vim state=present update_cache=yes
+
+    - name: Installs wget 
+      yum: pkg=wget state=present
+
+    - name: Installs tree
+      yum: pkg=tree state=present
+
