@@ -1,0 +1,24 @@
+---
+- hosts: webserver
+  become: true
+  tasks:
+    - name: Installing Nginx HTTP & Reverse Proxy server
+      apt: name=nginx state=installed update_cache=yes
+      notify:
+       - start-nginx-server
+
+    - name: Copy the webpages 
+      copy: src=./files/infotern/ dest=/var/www/html/ mode=0644
+      notify: 
+       - restart-nginx-server
+ 
+
+
+  handlers:
+    - name: start-nginx-server
+      service: name=nginx state=started enabled=yes
+
+    - name: restart-nginx-server
+      service: name=nginx state=restarted 
+
+       
