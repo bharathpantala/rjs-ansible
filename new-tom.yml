@@ -1,0 +1,95 @@
+---
+- hosts: app
+  become: yes
+  become_method: sudo
+  tasks:
+   - name: create /opt/java directory
+     file:
+      path: /opt/java
+      state: directory
+      mode: 0755
+
+   - name: unarchive java and install
+     unarchive: 
+       src: https://github.com/AdoptOpenJDK/openjdk11-binaries/releases/download/jdk-11.0.4%2B11/OpenJDK11U-jdk_x64_linux_hotspot_11.0.4_11.tar.gz
+       dest: /opt/java
+       remote_src: yes
+       extra_opts: [--strip-components=1]
+
+   - name: add tomcat group
+     group:
+       name: tomcat
+
+   - name: add tomcat user
+     user:
+       name: tomcat
+       group: tomcat
+       home: /user/share/tomcat
+       createhome: no
+
+   - name: create /opt/tomcat directory
+     file:
+      path: /opt/tomcat
+      state: directory
+      mode: 0755
+
+   - name: download & unarchive
+     unarchive:
+      src: http://mirrors.estointernet.in/apache/tomcat/tomcat-9/v9.0.22/bin/apache-tomcat-9.0.22.tar.gz
+      dest: /opt/tomcat
+      remote_src: yes
+      extra_opts: [--strip-components=1]
+
+   - name: Change ownership
+     file:
+       path: /opt/tomcat
+       owner: tomcat
+       group: tomcat
+       mode: "u+rwx,g+rx,o=rx"
+       recurse: yes
+       state: directory
+
+   - name: create /opt/tomcat/mahendra directory
+     file:
+      path: /opt/tomcat/mahendraapp
+      state: directory
+      mode: 0755
+
+   - name: copy context and tomcat user xml files
+     copy: src=./tomcat-users.xml dest=/opt/tomcat/conf/tomcat-users.xml
+   
+   - name: copy context
+     copy: src=./context.xml dest=/opt/tomcat/webapps/manager/META-INF/context.xml
+
+   - name: copy server conf
+     copy: src=./server.xml dest=/opt/tomcat/conf/server.xml
+
+   - name: Copy Tomcat service from local to remote
+     copy:
+       src: tomcat.service
+       dest: /etc/systemd/system/
+       mode: 0755
+       notify:
+             - start-tomcat-enable
+
+   - name: Deploy yje war file
+     copy: src=./sample.war dest=/opt/tomcat/mahendraapp/ mode=0644
+     notify:
+             - restart-tomcat
+   
+   
+   
+   
+   
+  handlers:
+   - name: start-tomcat-enable
+     systemd:
+      name: tomcat
+      state: started
+      enabled: true
+      daemon_reload: true
+
+   - name: restart-tomcat 
+     service: 
+      name: tomcat 
+      state: restarted

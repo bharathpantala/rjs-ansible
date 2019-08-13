@@ -1,0 +1,10 @@
+- name: Install Nginx Webserver
+  apt: pkg=nginx state=present update_cache=yes
+  notify:
+          - start-nginx
+- name: Copy webpages to doc root.
+  copy: src=files/index.html dest=/var/www/html/ mode=0644
+  notify:
+          - restart-nginx
+
+
